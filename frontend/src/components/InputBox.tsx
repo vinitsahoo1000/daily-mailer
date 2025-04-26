@@ -10,7 +10,7 @@ export const InputBox = ({onChange, placeholder,label, value, name}: InputBoxPro
     return(
         <div className="mt-3 p-2">
             <label className="text-sm font-medium text-gray-700">{label}</label>
-            <input type="text" name={name} onChange={onChange} className="bg-purple-100 border border-gray-300 text-gray-900 text-sm rounded-lg
+            <input type="text" name={name} onChange={onChange} className="border border-gray-300 text-gray-900 text-sm rounded-lg
             focus:ring-blue-500 focus:border-blue-500 block w-72 p-2.5" value={value} placeholder={placeholder} />
         </div>
     )

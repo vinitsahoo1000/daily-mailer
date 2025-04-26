@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { Heading } from "../components/Heading"
+import { InputBox } from "../components/InputBox";
+import { UnsubscribeField } from "../components/UnsubscribeField";
 
 
 export const HomePage = ()=>{
@@ -87,6 +89,8 @@ export const HomePage = ()=>{
                 <p className="text-gray-600">See you tomorrow for more!</p>
                 <p className="text-indigo-500 font-medium">— The DailyMailer Team</p>
             </div>
+
+            <UnsubscribeField/>
             </div>
     )
 }

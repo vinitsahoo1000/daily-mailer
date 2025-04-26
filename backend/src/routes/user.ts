@@ -47,20 +47,23 @@ userRouter.post('/signup',async(req:Request,res:Response):Promise<any>=>{
             })
         }
 
-        const newUser = await prisma.user.create({
-            data:{
-                name: userData.name,
-                email: userData.email,
-                mailType: userData.mailType,
-                zodiacSign: userData.zodiac
-            }
-        })
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        return res.status(201).json({
-            message: "New user signup successful!!",
-            user: newUser
-        })
+        const tempUserData = {
+            name: userData.name,
+            email: userData.email,
+            mailType: userData.mailType,
+            zodiacSign:  userData.zodiacSign
+        }
 
+        await redis.set(`otp:${userData.email}`, JSON.stringify({
+            otp: otp,
+            user: tempUserData
+        }),'EX',300)
+
+        await sendMailToUser(userData.email,'Verify your Email',`Your otp is ${otp}`)
+        
+        return res.status(200).json({ message: 'OTP sent to your email.' });
     }catch(error){
         if(error instanceof ZodError){
             return res.status(400).json({
@@ -74,33 +77,28 @@ userRouter.post('/signup',async(req:Request,res:Response):Promise<any>=>{
 })
 
 
-userRouter.post('/verifyEmail',async(req:Request,res:Response):Promise<any>=>{
+userRouter.get('/verify/:email',async(req:Request,res:Response):Promise<any>=>{
     try{
-        const {email} = req.body;
+        const email = req.params.email;
 
-        const user = await prisma.user.findUnique({
+        const isUser = await prisma.user.findUnique({
             where:{
                 email
             }
         })
 
-        if(!user){
-            return res.status(404).json({ message: 'User not found.' });
+        if(!isUser){
+            return res.status(401).json({
+                message: `${email} Email is not verfied`
+            })
         }
 
-        if(user.verified){
-            return res.status(400).json({ message: 'Email is already verified.' });
-        }
-
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        await redis.set(`otp: ${email}`,otp,'EX',300)
-
-        await sendMailToUser(email,'Verify your Email',`Your otp is ${otp}`)
-        
-        return res.status(200).json({ message: 'OTP sent to your email.' });
+        return res.json({
+            message: "User is verfied!!!",
+            user: isUser
+        })
     }catch(error){
-        return res.status(500).json({ message: 'Failed to send OTP.' });
+        return res.status(500).json({ message: 'Internal server error!!!' });
     }
 })
 
@@ -109,44 +107,31 @@ userRouter.post('/verifyOtp',async(req:Request,res:Response):Promise<any>=>{
     try{
         const {email,otp} = req.body;
 
-        const user = await prisma.user.findUnique({
-            where:{
-                email
-            }
-        })
+        const data = await redis.get(`otp:${email}`);
 
-        if(!user){
-            return res.status(404).json({ message: 'User not found.' });
-        }
+        console.log(data)
 
-        if(user.verified){
-            return res.status(400).json({ message: 'Email is already verified.' });
-        }
-
-        const storedOtp = await redis.get(`otp: ${email}`);
-
-        if(!storedOtp){
+        if(!data){
             return res.status(400).json({ message: 'OTP expired or not found.' });
         }
 
-        if(storedOtp !== otp){
+        const parsedData = JSON.parse(data)
+
+        console.log(parsedData)
+
+        if(parsedData.otp !== otp){
             return res.status(400).json({ message: 'Invalid OTP.' });
         }
 
-        await prisma.user.update({
-            where:{
-                email: email
-            },
-            data:{
-                verified: true
-            }
+        await prisma.user.create({
+            data: parsedData.user
         })
 
         await redis.del(`otp:${email}`); 
 
         return res.status(200).json({ message: 'Email verified successfully!' });
     }catch(error){
-        return res.status(500).json({ message: 'Failed to send OTP.' });
+        return res.status(500).json({ message: 'Failed to verify OTP.' });
     }
 })
 
@@ -155,8 +140,7 @@ userRouter.get('/randomQuotes',async(req:Request,res:Response):Promise<any>=>{
     try{
         const users: any[] = await prisma.user.findMany({
             where:{
-                mailType: "quotes",
-                verified: true
+                mailType: "quotes"
             }
         })
 
@@ -188,8 +172,7 @@ userRouter.get('/horoscope',async(req:Request,res:Response):Promise<any>=>{
             where:{
                 zodiacSign:{
                     not: null
-                },
-                verified: true
+                }
             }
         })
 
@@ -225,3 +208,67 @@ userRouter.get('/horoscope',async(req:Request,res:Response):Promise<any>=>{
 })
 
 
+userRouter.post('/unsubscribe/request',async(req:Request,res:Response):Promise<any>=>{
+    try{
+        const {email} = req.body;
+
+        const isUser = await prisma.user.findUnique({
+            where:{
+                email
+            }
+        })
+
+        if(!isUser){
+            return res.status(404).json({
+                message: "email does not exists!!!"
+            })
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        await redis.set(`otp:${email}`,otp,'EX',300)
+
+        await sendMailToUser(email,'Verify your Email',`Your otp is ${otp}`)
+
+        return res.json({
+            message: "Otp has been sent to email."
+        })
+    }catch(error){
+        return res.status(500).json({
+            message: "Internal server error!!!!"
+        })
+    }
+})
+
+
+userRouter.post('/unsubscribe/verify',async(req:Request,res:Response):Promise<any>=>{
+    try{
+        const {otp,email} = req.body;
+
+        const storedOtp = await redis.get(`otp:${email}`);
+
+        if(!storedOtp){
+            return res.status(400).json({ message: "Otp expired!!!" })
+        }
+
+        if(otp !== storedOtp){
+            return res.status(400).json({ message: 'Invalid OTP.' });
+        }
+
+        await prisma.user.delete({
+            where:{
+                email
+            }
+        })
+
+        await redis.del(`otp:${email}`);
+
+        await sendMailToUser(email,'Email unsubscribed',"Thank you for using our services!!")
+
+        return res.status(200).json({ message: "Email unsubscribed successfully!!!" })
+    }catch(error){
+        return res.status(500).json({
+            message: "Internal server error!!!!"
+        })
+    }
+})

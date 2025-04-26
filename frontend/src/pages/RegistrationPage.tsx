@@ -6,9 +6,11 @@ import { Button } from "../components/Button";
 import { toast } from "react-toastify";
 import {DropdownButton} from "../components/DropDownMenu";
 import { ZodiacDropBox } from "../components/ZodiacDropDown";
+import { useNavigate } from "react-router-dom";
 
 
 export const RegisterPage = ()=>{
+    const navigate = useNavigate();
     const [name,setName] = useState("");
     const [email,setEmail] = useState("");
     const [mailType, setMailType] = useState<"horoscope" | "quotes">();
@@ -20,12 +22,14 @@ export const RegisterPage = ()=>{
                 name,
                 email,
                 mailType,
-                zodiac: zodiacSign
+                zodiacSign
             })
             toast.success(response.data.message)
+            navigate(`/verify/${email}`)
         }
         catch(error:any){
-            toast.error(error)
+            const errorMessage = error.response.data.message || "Something went wrong";
+            toast.error(errorMessage)
         }
     }
 
@@ -43,7 +47,7 @@ export const RegisterPage = ()=>{
                 <div className="mt-2 flex flex-col items-center">
                     <div>
                         <InputBox label="Full Name" onChange={(e) => {setName(e.target.value)}} placeholder="Full Name"/>
-                        <InputBox label="Email" onChange={(e) => {setEmail(e.target.value)}} placeholder="Username"/>
+                        <InputBox label="Email" onChange={(e) => {setEmail(e.target.value)}} placeholder="Email"/>
                         <div className="ml-15">
                         <DropdownButton selected={mailType ?? "horoscope"} setSelected={setMailType} />
                         <ZodiacDropBox setZodiacSign={setZodiacSign}/>
