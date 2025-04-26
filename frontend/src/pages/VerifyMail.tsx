@@ -8,7 +8,6 @@ import { Button } from "../components/Button";
 
 
 export const VerifyMail = ()=>{
-    
     const {email} = useParams();
     const [otp,setOtp] = useState("");
     const [verified,setVerified] = useState(false);
@@ -62,9 +61,28 @@ export const VerifyMail = ()=>{
                 </div>
                 </>
             ) : (
-                <div className="text-center text-green-600 text-xl font-bold">
-                ✅ Email Verified Successfully!
-                </div>
+                <div className="mt-28 flex flex-col items-center justify-center gap-4 px-4">
+            <div className="text-center text-green-600 text-2xl font-bold">
+                ✅ Your Email {email} is Verified!
+            </div>
+            <div className="text-center text-gray-700 text-lg">
+                Thank you for verifying your email address. 🎉
+            </div>
+            <div className="text-center text-gray-600">
+                You are now officially subscribed to receive our daily services, including inspirational quotes and personalized horoscopes.
+            </div>
+            <div className="text-center text-gray-600">
+                Stay tuned for exciting updates straight to your inbox!
+            </div>
+            <div className="mt-6">
+                <a
+                    href="/"
+                    className="text-blue-600 hover:underline font-semibold"
+                >
+                    Go back to Homepage
+                </a>
+            </div>
+            </div>
             )}
             </div>
         );

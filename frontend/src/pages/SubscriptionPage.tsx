@@ -7,16 +7,18 @@ import axios from "axios"
 import { toast } from "react-toastify"
 
 
-export const UnsubscribePage = ()=>{
+export const SubscriptionPage = ()=>{
     const [otp,setOtp] = useState("");
     const {email} = useParams();
+    const {action} = useParams();
     const navigate = useNavigate();
 
     const unSubscribe = async()=>{
         try{
-            const response = await axios.post(`http://localhost:3000/api/v1/user/unsubscribe/verify`,{
+            const response = await axios.post(`http://localhost:3000/api/v1/user/subscription/verify`,{
                 email,
-                otp
+                otp,
+                action
             })
             toast.info(response.data.message)
             navigate('/')

@@ -2,11 +2,10 @@ import { Routes, Route } from "react-router-dom"
 import { HomePage } from "./pages/HomePage"
 import { RegisterPage } from "./pages/RegistrationPage"
 import { VerifyMail } from "./pages/VerifyMail"
-import { UnsubscribePage } from "./pages/UnsubsribePage"
+import { SubscriptionPage } from "./pages/SubscriptionPage"
 
 
 function App() {
-  
 
   return (
     <div>
@@ -14,9 +13,7 @@ function App() {
         <Route path="/" element={<HomePage/>}/>
         <Route path="/register" element={<RegisterPage/>}/>
         <Route path="/verify/:email" element={<VerifyMail/>}/>
-        <Route path="/verified/:email" element={<VerifyMail/>}/>
-        <Route path="/verified/:email" element={<VerifyMail/>}/>
-        <Route path="/unsubscribe/:email" element={<UnsubscribePage/>}/>
+        <Route path="/subscription/:action/:email" element={<SubscriptionPage/>}/>
       </Routes>
     </div>
   )
